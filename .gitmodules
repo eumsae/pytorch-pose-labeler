@@ -1,6 +1,0 @@
-[submodule "submodules/estim"]
-	path = submodules/estim
-	url = https://github.com/winstr/pytorch-pose-estimator.git
-[submodule "submodules/pyutils"]
-	path = submodules/pyutils
-	url = https://github.com/winstr/python-utils.git
