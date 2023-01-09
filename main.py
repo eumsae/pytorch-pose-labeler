@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget, QFileDialog
 from PySide6.QtCore import Qt, Slot, Signal
 from PySide6.QtGui import QAction
 
-from src.docks import FileSystemTreeDock, FrameViewerDock
+from src.docks import FileSystemTreeDock, FrameViewerDock, Dock
 
 
 class MainWindow(QMainWindow):
@@ -14,21 +14,17 @@ class MainWindow(QMainWindow):
 
     def __init__(self, title:str):
         super().__init__()
-        # --- Base UI ---
-        style = "background-color: rgb(170, 170, 170)"
-        self.cntr = QWidget()
-        self.cntr.setStyleSheet(style)
-        self.cntr_lyt = QVBoxLayout(self.cntr)
-        self.cntr_lyt.setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet("background-color: rgb(170, 170, 170)")
+        self.setLayout(QVBoxLayout())
         self.setWindowTitle(title)
         self.resize(1280, 768)
-        self.setCentralWidget(self.cntr)
 
-        # --- MenuBar ---
-        file_menu = self.menuBar().addMenu("File")
-        open_dir = QAction("Open Folder ...", self)
-        open_dir.triggered.connect(self.open_dir_triggered)
-        file_menu.addAction(open_dir)
+        self.file
+
+        file_menu = self.menuBar().addMenu("&File")
+        open_dir_act = QAction("Open Folder ...", self)
+        open_dir_act.triggered.connect(self.open_dir_triggered)
+        file_menu.addAction(open_dir_act)
 
         # --- Dock Widgets ---
         self.fs_dock = FileSystemTreeDock("Explorer")
@@ -36,8 +32,11 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.fs_dock)
 
         self.fv_dock = FrameViewerDock("Untitled")
-        self.fs_dock.item_clicked_sig.connect(self.fv_dock.show_video)
+        self.fs_dock.item_clicked_sig.connect(self.fv_dock.show_video_info)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.fv_dock)
+
+        self.test_dock = Dock("TEST")
+        self.addDockWidget(Qt.RightDockWidgetArea, self.test_dock)
 
     @Slot()
     def open_dir_triggered(self):

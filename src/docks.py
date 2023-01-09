@@ -3,36 +3,42 @@ import json
 
 import cv2
 import numpy as np
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtWidgets import QDockWidget, QTreeView, QFileSystemModel
-from PySide6.QtWidgets import QListWidget, QLabel, QListWidgetItem
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox
+from PySide6.QtWidgets import QDockWidget, QTreeView, QFileSystemModel, QLineEdit
+from PySide6.QtWidgets import QListWidget, QLabel, QListWidgetItem, QSlider, QSpinBox
+from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Slot, Signal, Qt, QModelIndex
 from PySide6.QtGui import QImage, QPixmap
+
 
 class Dock(QDockWidget):
     def __init__(self, title:str):
         super().__init__()
-        self._cntr = QWidget()
-        self._cntr_lyt = QVBoxLayout(self._cntr)
-        self._cntr_lyt.setContentsMargins(0, 0, 0, 0)
-        self._cntr_lyt.setSpacing(2)
+        #self._container_layout.setContentsMargins(0, 0, 0, 0)
+        #self._container_layout.setSpacing(2)
         self.setWindowTitle(title)
-        self.setWidget(self._cntr)
         self.setFeatures(QDockWidget.DockWidgetFloatable
                         |QDockWidget.DockWidgetMovable)
 
 
 class FileSystemTreeDock(Dock):
-    item_clicked_sig = Signal(str)
+    file_system_tree_item_clicked = Signal(str)
 
     def __init__(self, title:str):
         super().__init__(title)
+        self._ui()
+        self._event()
+
+    def _ui(self):
+        self.setLayout(QVBoxLayout())
         self._model = QFileSystemModel()
         self._tree = QTreeView()
         self._tree.setModel(self._model)
         self._tree.setHeaderHidden(True)
-        self._tree.clicked.connect(self.item_clicked)
-        self._cntr_lyt.addWidget(self._tree)
+        self.layout().addWidget(self._tree)
+
+    def _event(self):
+        self._tree.clicked.connect(self._item_clicked)
 
     @Slot(str)
     def show_tree(self, root_dir:str):
@@ -41,33 +47,80 @@ class FileSystemTreeDock(Dock):
         self._tree.hideColumn(2) # type
         self._tree.hideColumn(3) # modified date
         self._tree.setRootIndex(self._model.index(root_dir))
-    
+
     @Slot(QModelIndex)
-    def item_clicked(self, index:QModelIndex):
-        file_path = self._model.filePath(index)
-        self.item_clicked_sig.emit(file_path)
+    def _item_clicked(self, index:QModelIndex):
+        self.file_system_tree_item_clicked.emit(self._model.filePath(index))
 
 
-class FrameViewerDock(Dock):
+class PreviewThumbnailsDock(Dock):
+    preview_thumbnail_row_changed = Signal(int)
+
     def __init__(self, title:str):
         super().__init__(title)
+        self._ui()
+        self._event()
+    
+    def _ui(self):
+        self.setLayout(QHBoxLayout())
         self._list = QListWidget()
         self._list.setFlow(QListWidget.LeftToRight)
-        self._cntr_lyt.addWidget(self._list)
+        self.layout().addWidget(self._list)
+
+    def _event(self):
+        self._list.currentRowChanged.connect(self._row_changed)
+
+    @Slot()
+    def show_thumbnails(self):
+        pass
+
+    @Slot(int)
+    def _row_changed(self, row:int):
+        self.preview_thumbnail_row_changed.emit(row)
+
+    
+    """
+    @Slot(int)
+    def row_changed(self, row):
+        if row == -1:
+            return
+        item = self._list.item(row)
+        widget = self._list.itemWidget(item)
+        print(widget._idx)
 
     @Slot(str)
-    def show_video(self, path:str):
+    def show_video_info(self, path:str):
+        self._path = path
         cap = cv2.VideoCapture(path)
-        while(True):
-            ret, frame = cap.read()
-            if not ret:
-                break
-            item = FrameItem(1, frame)
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        tof = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = int(round(cap.get(cv2.CAP_PROP_FPS)))
+        print(os.path.dirname(path), w, h, tof, fps)
+        cap.release()
+
+    @Slot(str)
+    def show_frames(self):
+        if self._path is None:
+            return
+        cap = cv2.VideoCapture(self._path)
+        tof = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = int(round(cap.get(cv2.CAP_PROP_FPS)))
+
+        step = int(fps // 10)
+        indices = list(range(0, tof, step))
+        for i in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+            _, frame = cap.read()
+            item = FrameItem(i, frame)
             list_item = QListWidgetItem(self._list)
             list_item.setSizeHint(item.sizeHint())
             self._list.addItem(list_item)
             self._list.setItemWidget(list_item, item)
         cap.release()
+    """
+
+
 
 
 class FrameItem(QWidget):
@@ -86,6 +139,6 @@ class FrameItem(QWidget):
         img = QPixmap.fromImage(img)
 
         self._img.setPixmap(img)
-        self._cntr_lyt = QVBoxLayout()
-        self._cntr_lyt.addWidget(self._img)
-        self.setLayout(self._cntr_lyt)
+        self._container_layout = QVBoxLayout()
+        self._container_layout.addWidget(self._img)
+        self.setLayout(self._container_layout)
