@@ -31,7 +31,8 @@ def job_func(video:str):
 
 
 if __name__ == "__main__":
-    dataset_dir = "/workspace/data/aihub-human-actions-50/actions-5-origin"
+    #dataset_dir = "/workspace/data/aihub-human-actions-50/actions-5-origin"
+    dataset_dir = "/workspace/pytorch-pose-labeler/sample"
     posix_regex = "*.mp4"
 
     job_items = list(get_files(dataset_dir, posix_regex))
