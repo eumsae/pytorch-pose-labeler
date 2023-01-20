@@ -14,7 +14,7 @@ def get_files(root_dir:str, posix_regex:str, recursive:bool=True):
     """
     if not os.path.exists(root_dir):
         msg = f"{root_dir} is not exists or not a directory."
-        raise ValueError(msg)
+        raise FileNotFoundError(msg)
     for parent_dir, _, files in os.walk(root_dir):
         if files:  # if files are exist
             for file_ in fnmatch.filter(files, posix_regex):
