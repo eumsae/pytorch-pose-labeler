@@ -1,0 +1,3 @@
+[submodule "submodules/python_utils"]
+	path = submodules/python_utils
+	url = https://github.com/winstr/python-utils
